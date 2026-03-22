@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Pot body -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M25,50 L25,85 C25,95 35,100 60,100 C85,100 95,95 95,85 L95,50 Z" />
+    <!-- Pot rim -->
+    <path
+        android:fillColor="#E55A2B"
+        android:pathData="M20,45 L100,45 L100,55 C100,55 95,50 60,50 C25,50 20,55 20,55 Z" />
+    <!-- Handle left -->
+    <path
+        android:fillColor="#E55A2B"
+        android:pathData="M15,55 L25,55 L25,65 L15,65 Z"
+        android:strokeColor="#E55A2B"
+        android:strokeWidth="2" />
+    <!-- Handle right -->
+    <path
+        android:fillColor="#E55A2B"
+        android:pathData="M95,55 L105,55 L105,65 L95,65 Z"
+        android:strokeColor="#E55A2B"
+        android:strokeWidth="2" />
+    <!-- Steam 1 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="2.5"
+        android:pathData="M45,40 C45,35 50,33 50,28 C50,23 45,20 45,15" />
+    <!-- Steam 2 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="2.5"
+        android:pathData="M60,38 C60,33 65,30 65,25 C65,20 60,17 60,12" />
+    <!-- Steam 3 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="2.5"
+        android:pathData="M75,40 C75,35 80,33 80,28 C80,23 75,20 75,15" />
+    <!-- Plus sign -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,68 L65,68 L65,73 L55,73 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M57.5,65.5 L62.5,65.5 L62.5,75.5 L57.5,75.5 Z" />
+</vector>

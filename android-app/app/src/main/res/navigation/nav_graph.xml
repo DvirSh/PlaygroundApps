@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/recipeListFragment">
+
+    <fragment
+        android:id="@+id/recipeListFragment"
+        android:name="com.dvir.playground.ui.recipelist.RecipeListFragment"
+        android:label="@string/tab_recipes"
+        tools:layout="@layout/fragment_recipe_list">
+        <action
+            android:id="@+id/action_list_to_detail"
+            app:destination="@id/recipeDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/recipeDetailFragment"
+        android:name="com.dvir.playground.ui.recipedetail.RecipeDetailFragment"
+        android:label="Recipe Detail"
+        tools:layout="@layout/fragment_recipe_detail">
+        <argument
+            android:name="recipeJson"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_detail_to_edit"
+            app:destination="@id/editRecipeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addRecipeFragment"
+        android:name="com.dvir.playground.ui.addrecipe.AddRecipeFragment"
+        android:label="@string/tab_add_recipe"
+        tools:layout="@layout/fragment_add_recipe">
+        <action
+            android:id="@+id/action_add_to_edit"
+            app:destination="@id/editRecipeFragment" />
+        <action
+            android:id="@+id/action_add_to_book"
+            app:destination="@id/recipeBookFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/recipeBookFragment"
+        android:name="com.dvir.playground.ui.recipebook.RecipeBookFragment"
+        android:label="Recipe Book"
+        tools:layout="@layout/fragment_recipe_book">
+        <argument
+            android:name="recipeListJson"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editRecipeFragment"
+        android:name="com.dvir.playground.ui.editrecipe.EditRecipeFragment"
+        android:label="@string/edit"
+        tools:layout="@layout/fragment_edit_recipe">
+        <argument
+            android:name="recipeJson"
+            app:argType="string" />
+    </fragment>
+</navigation>

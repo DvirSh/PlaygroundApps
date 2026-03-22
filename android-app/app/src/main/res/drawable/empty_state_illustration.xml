@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <!-- Book -->
+    <path
+        android:fillColor="#FFE0CC"
+        android:pathData="M15,20 L50,15 L50,85 L15,80 Z" />
+    <path
+        android:fillColor="#FFD0B0"
+        android:pathData="M50,15 L85,20 L85,80 L50,85 Z" />
+    <!-- Lines on left page -->
+    <path android:fillColor="#FF6B35" android:pathData="M22,35 L43,33 L43,35 L22,37 Z" />
+    <path android:fillColor="#FFAB8A" android:pathData="M22,42 L43,40 L43,42 L22,44 Z" />
+    <path android:fillColor="#FFAB8A" android:pathData="M22,49 L38,47 L38,49 L22,51 Z" />
+    <!-- Lines on right page -->
+    <path android:fillColor="#FF6B35" android:pathData="M57,33 L78,35 L78,37 L57,35 Z" />
+    <path android:fillColor="#FFAB8A" android:pathData="M57,40 L78,42 L78,44 L57,42 Z" />
+    <path android:fillColor="#FFAB8A" android:pathData="M57,47 L73,49 L73,51 L57,49 Z" />
+    <!-- Spine -->
+    <path
+        android:fillColor="#E55A2B"
+        android:pathData="M48,15 L52,15 L52,85 L48,85 Z" />
+</vector>

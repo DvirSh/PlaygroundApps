@@ -1,0 +1,17 @@
+# Backend
+recipe-backend/node_modules/
+recipe-backend/.env
+
+# Android
+android-app/local.properties
+android-app/.gradle/
+android-app/app/build/
+android-app/build/
+android-app/env.sh
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store

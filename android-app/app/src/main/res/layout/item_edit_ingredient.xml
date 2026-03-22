@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="6dp">
+
+    <EditText
+        android:id="@+id/amountInput"
+        android:layout_width="55dp"
+        android:layout_height="40dp"
+        android:hint="Qty"
+        android:textSize="13sp"
+        android:background="@drawable/search_bg"
+        android:paddingStart="8dp"
+        android:paddingEnd="4dp"
+        android:singleLine="true"
+        android:importantForAutofill="no" />
+
+    <EditText
+        android:id="@+id/unitInput"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:hint="Unit"
+        android:textSize="13sp"
+        android:background="@drawable/search_bg"
+        android:paddingStart="8dp"
+        android:paddingEnd="4dp"
+        android:singleLine="true"
+        android:importantForAutofill="no" />
+
+    <EditText
+        android:id="@+id/nameInput"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        android:hint="Ingredient"
+        android:textSize="13sp"
+        android:background="@drawable/search_bg"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:singleLine="true"
+        android:importantForAutofill="no" />
+
+    <ImageButton
+        android:id="@+id/removeButton"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="4dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Remove"
+        android:scaleType="centerInside"
+        android:padding="6dp" />
+</LinearLayout>
