@@ -1,6 +1,10 @@
 package com.dvir.playground.ui.editrecipe
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,29 +12,44 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.dvir.playground.R
-import androidx.appcompat.app.AlertDialog
 import com.dvir.playground.api.AiParsedResult
 import com.dvir.playground.api.CheckDuplicatesRequest
 import com.dvir.playground.api.ParseTextRequest
 import com.dvir.playground.api.RetrofitClient
 import com.dvir.playground.api.TranslateRequest
-import java.util.Locale
 import com.dvir.playground.databinding.FragmentEditRecipeBinding
 import com.dvir.playground.model.Ingredient
 import com.dvir.playground.model.Recipe
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.Locale
 
 class EditRecipeFragment : Fragment() {
     private var _binding: FragmentEditRecipeBinding? = null
     private val binding get() = _binding!!
     private lateinit var recipe: Recipe
     private var isCreateMode = false
+    private var uploadedImageUrl: String? = null
+
+    private val imagePicker = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = result.data?.data ?: return@registerForActivityResult
+            uploadImage(uri)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -52,6 +71,13 @@ class EditRecipeFragment : Fragment() {
             binding.parseButton.setOnClickListener { parseFromPaste() }
             binding.translateContainer.visibility = View.VISIBLE
             binding.translateButton.setOnClickListener { translateCurrentRecipe() }
+        }
+
+        // Image
+        showImage(recipe.image_url)
+        binding.uploadImageButton.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            imagePicker.launch(intent)
         }
 
         binding.titleInput.setText(recipe.title)
@@ -93,6 +119,43 @@ class EditRecipeFragment : Fragment() {
 
         binding.saveButton.setOnClickListener {
             saveRecipe()
+        }
+    }
+
+    private fun showImage(url: String?) {
+        if (!url.isNullOrBlank()) {
+            binding.imageCard.visibility = View.VISIBLE
+            Glide.with(this).load(url).centerCrop().into(binding.recipeImage)
+            binding.uploadImageButton.text = getString(R.string.change_photo)
+        } else {
+            binding.imageCard.visibility = View.GONE
+            binding.uploadImageButton.text = getString(R.string.upload_photo)
+        }
+    }
+
+    private fun uploadImage(uri: Uri) {
+        binding.progressBar.visibility = View.VISIBLE
+        binding.uploadImageButton.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                val inputStream = requireContext().contentResolver.openInputStream(uri)
+                val bytes = inputStream?.readBytes() ?: ByteArray(0)
+                inputStream?.close()
+
+                val mimeType = requireContext().contentResolver.getType(uri) ?: "image/jpeg"
+                val requestBody = bytes.toRequestBody(mimeType.toMediaType())
+                val part = MultipartBody.Part.createFormData("image", "recipe.jpg", requestBody)
+                val result = RetrofitClient.api.uploadImage(part)
+
+                uploadedImageUrl = result.url
+                showImage(result.url)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), e.message ?: "Upload failed", Toast.LENGTH_SHORT).show()
+            } finally {
+                binding.progressBar.visibility = View.GONE
+                binding.uploadImageButton.isEnabled = true
+            }
         }
     }
 
@@ -274,6 +337,7 @@ class EditRecipeFragment : Fragment() {
         val updated = recipe.copy(
             title = title,
             description = binding.descriptionInput.text.toString().trim().ifBlank { null },
+            image_url = uploadedImageUrl ?: recipe.image_url,
             ingredients = collectIngredients(),
             steps = collectSteps(),
             tags = collectTags()

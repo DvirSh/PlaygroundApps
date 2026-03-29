@@ -64,6 +64,33 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Recipe Image -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/imageCard"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <ImageView
+                android:id="@+id/recipeImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="@null" />
+        </androidx.cardview.widget.CardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/uploadImageButton"
+            style="@style/AppButton.Outline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/upload_photo"
+            android:textSize="13sp" />
+
         <!-- Title -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"

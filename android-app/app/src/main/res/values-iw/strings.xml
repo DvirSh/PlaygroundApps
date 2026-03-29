@@ -43,6 +43,8 @@
     <string name="save_all_n">שמור הכל (%1$d)</string>
     <string name="delete_page">הסר מתכון זה</string>
     <string name="imported_n_recipes">יובאו %1$d מתכונים</string>
+    <string name="upload_photo">העלה תמונה</string>
+    <string name="change_photo">החלף תמונה</string>
     <string name="translate_recipe">תרגם</string>
     <string name="translating">מתרגם…</string>
     <string name="translate_failed">התרגום נכשל</string>

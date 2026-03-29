@@ -43,6 +43,8 @@
     <string name="save_all_n">Save All (%1$d)</string>
     <string name="delete_page">Remove this recipe</string>
     <string name="imported_n_recipes">Imported %1$d recipes</string>
+    <string name="upload_photo">Upload photo</string>
+    <string name="change_photo">Change photo</string>
     <string name="translate_recipe">Translate</string>
     <string name="translating">Translating…</string>
     <string name="translate_failed">Translation failed</string>
