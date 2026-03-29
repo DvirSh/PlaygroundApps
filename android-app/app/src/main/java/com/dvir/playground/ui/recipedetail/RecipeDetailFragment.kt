@@ -1,14 +1,18 @@
 package com.dvir.playground.ui.recipedetail
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -22,10 +26,24 @@ import com.dvir.playground.model.Recipe
 import com.google.android.material.chip.Chip
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class RecipeDetailFragment : Fragment() {
     private var _binding: FragmentRecipeDetailBinding? = null
     private val binding get() = _binding!!
+    private var currentRecipe: Recipe? = null
+
+    private val photoPicker = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val recipe = currentRecipe ?: return@registerForActivityResult
+            uploadPhoto(recipe, uri)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -39,6 +57,12 @@ class RecipeDetailFragment : Fragment() {
 
         val json = arguments?.getString("recipeJson") ?: return
         val recipe = Gson().fromJson(json, Recipe::class.java)
+        currentRecipe = recipe
+
+        binding.addPhotoButton.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            photoPicker.launch(intent)
+        }
 
         binding.recipeTitle.text = recipe.title
 
@@ -169,6 +193,27 @@ class RecipeDetailFragment : Fragment() {
             row.addView(number)
             row.addView(stepText)
             binding.stepsList.addView(row)
+        }
+    }
+
+    private fun uploadPhoto(recipe: Recipe, uri: Uri) {
+        lifecycleScope.launch {
+            try {
+                val inputStream = requireContext().contentResolver.openInputStream(uri)
+                val bytes = inputStream?.readBytes() ?: ByteArray(0)
+                inputStream?.close()
+
+                val mimeType = requireContext().contentResolver.getType(uri) ?: "image/jpeg"
+                val requestBody = bytes.toRequestBody(mimeType.toMediaType())
+                val part = MultipartBody.Part.createFormData("image", "recipe.jpg", requestBody)
+                val uploadResult = RetrofitClient.api.uploadImage(part)
+
+                RetrofitClient.api.updateRecipe(recipe.id!!, recipe.copy(image_url = uploadResult.url))
+                Glide.with(this@RecipeDetailFragment).load(uploadResult.url).centerCrop().into(binding.recipeImage)
+                currentRecipe = recipe.copy(image_url = uploadResult.url)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), e.message ?: "Upload failed", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

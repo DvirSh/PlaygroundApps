@@ -10,7 +10,8 @@ import com.dvir.playground.databinding.ItemRecipeBinding
 import com.dvir.playground.model.Recipe
 
 class RecipeAdapter(
-    private val onClick: (Recipe) -> Unit
+    private val onClick: (Recipe) -> Unit,
+    private val onAddPhoto: (Recipe) -> Unit = {}
 ) : ListAdapter<Recipe, RecipeAdapter.ViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -35,8 +36,12 @@ class RecipeAdapter(
                     .load(recipe.image_url)
                     .centerCrop()
                     .into(binding.recipeImage)
+            } else {
+                binding.recipeImage.setImageDrawable(null)
+                binding.recipeImage.setBackgroundResource(com.dvir.playground.R.color.search_bg)
             }
             binding.root.setOnClickListener { onClick(recipe) }
+            binding.addPhotoButton.setOnClickListener { onAddPhoto(recipe) }
         }
     }
 
