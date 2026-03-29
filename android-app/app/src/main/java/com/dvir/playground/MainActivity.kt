@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
             val locale = Locale(lang)
             Locale.setDefault(locale)
             val config = Configuration(newBase.resources.configuration)
+            config.fontScale = newBase.resources.configuration.fontScale
             config.setLocale(locale)
             config.setLayoutDirection(locale)
             super.attachBaseContext(newBase.createConfigurationContext(config))
