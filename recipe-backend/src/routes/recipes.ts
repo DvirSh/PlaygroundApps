@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
 import * as recipeService from '../services/recipeService';
 import { parseRecipeText } from '../parsers/textParser';
 import { parseTextWithAI, parseImageWithAI, parsePdfWithAI, translateRecipe } from '../services/geminiService';
-import { supabase } from '../services/supabaseClient';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -199,31 +199,26 @@ router.post('/parse-pdf', upload.single('file'), async (req: Request, res: Respo
   }
 });
 
-// POST /upload-image - upload scanned image to Supabase Storage
+// POST /upload-image - upload scanned image to Cloudinary
 router.post('/upload-image', upload.single('image'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'No image provided' });
       return;
     }
-    const ext = req.file.mimetype === 'image/png' ? 'png' : 'jpg';
-    const filename = `scan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const { error } = await supabase.storage
-      .from('recipe-scans')
-      .upload(filename, req.file.buffer, {
-        contentType: req.file.mimetype,
-      });
+    const result = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'recipe-scans' },
+        (error, result) => {
+          if (error) reject(new Error(`Upload failed: ${error.message}`));
+          else resolve(result);
+        }
+      );
+      stream.end(req.file!.buffer);
+    });
 
-    if (error) {
-      throw new Error(`Upload failed: ${error.message}`);
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('recipe-scans')
-      .getPublicUrl(filename);
-
-    res.json({ url: urlData.publicUrl });
+    res.json({ url: result.secure_url });
   } catch (error: any) {
     console.error('Error uploading image:', error);
     res.status(500).json({ error: error.message || 'Upload failed' });

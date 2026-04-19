@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { db } from './db';
 import { parseRecipe } from '../parsers';
 import { ParsedRecipe } from '../parsers/types';
 
@@ -18,98 +18,91 @@ export async function fetchAndSave(url: string) {
     throw new Error('Could not parse recipe from URL');
   }
 
-  const { data, error } = await supabase
-    .from('recipes')
-    .insert({
-      title: parsed.title,
-      description: parsed.description || null,
-      image_url: parsed.image_url || null,
-      source_url: parsed.source_url,
-      ingredients: parsed.ingredients,
-      steps: parsed.steps,
-      tags: parsed.tags || [],
-    })
-    .select()
-    .single();
+  const { rows } = await db.query(
+    `INSERT INTO recipes (title, description, image_url, source_url, ingredients, steps, tags)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [
+      parsed.title,
+      parsed.description || null,
+      parsed.image_url || null,
+      parsed.source_url,
+      JSON.stringify(parsed.ingredients),
+      JSON.stringify(parsed.steps),
+      parsed.tags || [],
+    ]
+  );
 
-  if (error) {
-    throw new Error(`Failed to save recipe: ${error.message}`);
-  }
-
-  return data;
+  return rows[0];
 }
 
 export async function createManual(recipe: any) {
-  const { data, error } = await supabase
-    .from('recipes')
-    .insert({
-      title: recipe.title || 'Untitled',
-      description: recipe.description || null,
-      image_url: recipe.image_url || null,
-      source_url: recipe.source_url && recipe.source_url !== 'manual' && recipe.source_url !== 'scanned'
-        ? recipe.source_url
-        : `manual:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      ingredients: recipe.ingredients || [],
-      steps: recipe.steps || [],
-      tags: recipe.tags || [],
-    })
-    .select()
-    .single();
+  const sourceUrl = recipe.source_url && recipe.source_url !== 'manual' && recipe.source_url !== 'scanned'
+    ? recipe.source_url
+    : `manual:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-  if (error) {
-    throw new Error(`Failed to save recipe: ${error.message}`);
-  }
+  const { rows } = await db.query(
+    `INSERT INTO recipes (title, description, image_url, source_url, ingredients, steps, tags)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [
+      recipe.title || 'Untitled',
+      recipe.description || null,
+      recipe.image_url || null,
+      sourceUrl,
+      JSON.stringify(recipe.ingredients || []),
+      JSON.stringify(recipe.steps || []),
+      recipe.tags || [],
+    ]
+  );
 
-  return data;
+  return rows[0];
 }
 
 export async function createBatch(recipes: any[]) {
-  const rows = recipes.map((recipe: any, i: number) => ({
-    title: recipe.title || 'Untitled',
-    description: recipe.description || null,
-    image_url: recipe.image_url || null,
-    source_url: `manual:${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
-    ingredients: recipe.ingredients || [],
-    steps: recipe.steps || [],
-    tags: recipe.tags || [],
-  }));
+  const placeholders: string[] = [];
+  const values: any[] = [];
+  let idx = 1;
 
-  const { data, error } = await supabase
-    .from('recipes')
-    .insert(rows)
-    .select();
-
-  if (error) {
-    throw new Error(`Failed to save recipes: ${error.message}`);
+  for (let i = 0; i < recipes.length; i++) {
+    const r = recipes[i];
+    placeholders.push(`($${idx}, $${idx+1}, $${idx+2}, $${idx+3}, $${idx+4}, $${idx+5}, $${idx+6})`);
+    values.push(
+      r.title || 'Untitled',
+      r.description || null,
+      r.image_url || null,
+      `manual:${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+      JSON.stringify(r.ingredients || []),
+      JSON.stringify(r.steps || []),
+      r.tags || [],
+    );
+    idx += 7;
   }
 
-  return data;
+  const { rows } = await db.query(
+    `INSERT INTO recipes (title, description, image_url, source_url, ingredients, steps, tags)
+     VALUES ${placeholders.join(', ')}
+     RETURNING *`,
+    values
+  );
+
+  return rows;
 }
 
 export async function findByTitles(titles: string[]) {
-  const { data, error } = await supabase
-    .from('recipes')
-    .select('*')
-    .in('title', titles);
-
-  if (error) {
-    throw new Error(`Failed to check duplicates: ${error.message}`);
-  }
-
-  return data || [];
+  const { rows } = await db.query(
+    `SELECT * FROM recipes WHERE title = ANY($1)`,
+    [titles]
+  );
+  return rows;
 }
 
 export async function search(query?: string, tag?: string) {
-  const { data, error } = await supabase
-    .from('recipes')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { rows } = await db.query(
+    `SELECT * FROM recipes ORDER BY created_at DESC`
+  );
 
-  if (error) {
-    throw new Error(`Failed to search recipes: ${error.message}`);
-  }
-
-  let results = data || [];
+  let results = rows;
 
   if (tag) {
     results = results.filter((recipe: any) =>
@@ -132,50 +125,51 @@ export async function search(query?: string, tag?: string) {
 }
 
 export async function update(id: string, updates: any) {
-  const allowed: any = {};
-  if (updates.title !== undefined) allowed.title = updates.title;
-  if (updates.description !== undefined) allowed.description = updates.description;
-  if (updates.ingredients !== undefined) allowed.ingredients = updates.ingredients;
-  if (updates.steps !== undefined) allowed.steps = updates.steps;
-  if (updates.tags !== undefined) allowed.tags = updates.tags;
-  if (updates.image_url !== undefined) allowed.image_url = updates.image_url;
+  const fields: string[] = [];
+  const values: any[] = [];
+  let idx = 1;
 
-  const { data, error } = await supabase
-    .from('recipes')
-    .update(allowed)
-    .eq('id', id)
-    .select()
-    .single();
+  if (updates.title !== undefined) { fields.push(`title = $${idx++}`); values.push(updates.title); }
+  if (updates.description !== undefined) { fields.push(`description = $${idx++}`); values.push(updates.description); }
+  if (updates.ingredients !== undefined) { fields.push(`ingredients = $${idx++}`); values.push(JSON.stringify(updates.ingredients)); }
+  if (updates.steps !== undefined) { fields.push(`steps = $${idx++}`); values.push(JSON.stringify(updates.steps)); }
+  if (updates.tags !== undefined) { fields.push(`tags = $${idx++}`); values.push(updates.tags); }
+  if (updates.image_url !== undefined) { fields.push(`image_url = $${idx++}`); values.push(updates.image_url); }
 
-  if (error) {
-    throw new Error(`Failed to update recipe: ${error.message}`);
+  if (fields.length === 0) {
+    throw new Error('No valid fields to update');
   }
 
-  return data;
+  values.push(id);
+
+  const { rows } = await db.query(
+    `UPDATE recipes SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+    values
+  );
+
+  if (rows.length === 0) {
+    throw new Error('Recipe not found');
+  }
+
+  return rows[0];
 }
 
 export async function remove(id: string) {
-  const { error } = await supabase
-    .from('recipes')
-    .delete()
-    .eq('id', id);
+  const { rowCount } = await db.query(
+    `DELETE FROM recipes WHERE id = $1`,
+    [id]
+  );
 
-  if (error) {
-    throw new Error(`Failed to delete recipe: ${error.message}`);
+  if (rowCount === 0) {
+    throw new Error('Recipe not found');
   }
 }
 
 export async function getAllTags() {
-  const { data, error } = await supabase
-    .from('recipes')
-    .select('tags');
-
-  if (error) {
-    throw new Error(`Failed to fetch tags: ${error.message}`);
-  }
+  const { rows } = await db.query(`SELECT tags FROM recipes`);
 
   const tagSet = new Set<string>();
-  (data || []).forEach((row: any) => {
+  rows.forEach((row: any) => {
     (row.tags || []).forEach((t: string) => tagSet.add(t));
   });
 
